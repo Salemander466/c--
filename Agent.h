@@ -1,7 +1,9 @@
 #ifndef AGENT_H
 #define AGENT_H
 
-#include <utility>  // For std::pair
+#include <utility>
+#include "Maze.h"
+// For std::pair
 
 using namespace std;
 

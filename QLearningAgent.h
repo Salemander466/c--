@@ -8,7 +8,7 @@ class QLearningAgent : public Agent {
 private:
     double Q[10][10][4]; // Q-table for states and actions
     int stepsTaken;
-    pair<int, int> startingPosition;
+    std::pair<int, int> startingPosition;
     const double ALPHA = 0.1;  // Learning rate
     const double GAMMA = 0.9;  // Discount factor
     const double EPSILON = 0.1;  // Exploration rate
@@ -23,7 +23,8 @@ public:
     void updateQValues(int action, int reward, int newRow, int newCol);
     void move(const Maze &maze);
     void reset();  // Resets the agent to the starting position
-    bool hasReachedGoal();  // Checks if the agent has reached the goal
+    bool hasReachedGoal(const Maze &maze);  // Checks if the agent has reached the goal, now taking Maze as a parameter
+    
 };
 
 #endif // QLEARNINGAGENT_H

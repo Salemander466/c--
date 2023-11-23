@@ -2,6 +2,12 @@
 #include <utility> // For std::pair
 #include <cstdlib> // For std::rand, std::srand
 #include <ctime> // For std::time
+#include <algorithm> // For std::max_element
+
+// Assuming these are constant for the maze
+const int GOAL_ROW = 20; // 21st row in 0-based indexing
+const int GOAL_COL = 20; // 21st column in 0-based indexing
+
 
 QLearningAgent::QLearningAgent(int row, int col) : Agent(row, col) {
     std::srand(static_cast<unsigned int>(std::time(nullptr))); // Seed for randomness
@@ -58,18 +64,19 @@ void QLearningAgent::move(const Maze &maze) {
         case 3: newCol--; break; // Left
     }
 
+    // Get the size of the maze
+    auto [mazeRows, mazeCols] = maze.getSize();
+
     // Check for boundaries and walls
-    if (newRow < 0 || newRow >= maze.size() || newCol < 0 || newCol >= maze[0].size() || maze[newRow][newCol] == 1) {
+    if (newRow < 0 || newRow >= mazeRows || newCol < 0 || newCol >= mazeCols || maze.at(newRow, newCol) == 1) {
         newRow = position.first;
         newCol = position.second;
     }
 
     int reward = STEP_REWARD; // Default reward
-    if (maze[newRow][newCol] == 2) {  // Found goggles
-        // Increase perceptive field
+    if (maze.at(newRow, newCol) == 2) {  // Found goggles
         reward = 5;  // Positive reward for finding goggles
-    } else if (maze[newRow][newCol] == 3) {  // Found speed potion
-        // Increase step width
+    } else if (maze.at(newRow, newCol) == 3) {  // Found speed potion
         reward = 5;  // Positive reward for finding speed potion
     } else if (newRow == GOAL_ROW && newCol == GOAL_COL) {
         reward = GOAL_REWARD; // Reward for reaching the goal
@@ -84,4 +91,14 @@ void QLearningAgent::move(const Maze &maze) {
         position = startingPosition;
         stepsTaken = 0;
     }
+}
+// Implementation of hasReachedGoal
+bool QLearningAgent::hasReachedGoal(const Maze &maze) {
+    return position.first == GOAL_ROW && position.second == GOAL_COL;
+}
+
+// Implementation of reset
+void QLearningAgent::reset() {
+    position = startingPosition;
+    stepsTaken = 0;
 }
