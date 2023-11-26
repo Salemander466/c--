@@ -65,7 +65,9 @@ void QLearningAgent::move(const Maze &maze) {
     }
 
     // Get the size of the maze
-    auto [mazeRows, mazeCols] = maze.getSize();
+    std::pair<int, int> mazeSize = maze.getSize();
+    int mazeRows = mazeSize.first;
+    int mazeCols = mazeSize.second;
 
     // Check for boundaries and walls
     if (newRow < 0 || newRow >= mazeRows || newCol < 0 || newCol >= mazeCols || maze.at(newRow, newCol) == 1) {
