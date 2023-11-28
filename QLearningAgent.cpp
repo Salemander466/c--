@@ -50,50 +50,90 @@ void QLearningAgent::updateQValues(int action, int reward, int newRow, int newCo
     Q[position.first][position.second][action] += ALPHA * (reward + GAMMA * maxQNew - Q[position.first][position.second][action]);
 }
 
+int QLearningAgent::calculateReward(const Maze &maze, int row, int col) {
+    int cellValue = maze.at(row, col);
+
+    switch (cellValue) {
+        case 0: // Empty space
+            return STEP_REWARD;
+        case 1: // Wall
+            return WALL_PENALTY;
+        case 2: // Goggles
+            return GOGGLES_REWARD;
+        case 3: // Speed potion
+            return SPEED_POTION_REWARD;
+        case 4: // Fog
+            return FOG_PENALTY;
+        case 5: // Slowpoke potion
+            return SLOWPOKE_POTION_PENALTY;
+        case 6: // Goal
+            return GOAL_REWARD;
+        default:
+            return 0; // Default case, if needed
+    }
+}
 
 void QLearningAgent::move(const Maze &maze) {
-    int action = chooseAction(maze);
+    int action = chooseAction(maze); // Choose action based on Q-values and epsilon-greedy strategy
     
     // Calculate new position based on action
-    int newRow = position.first;
-    int newCol = position.second;
-    switch (action) {
-        case 0: newRow--; break; // Up
-        case 1: newCol++; break; // Right
-        case 2: newRow++; break; // Down
-        case 3: newCol--; break; // Left
-    }
-
-    // Get the size of the maze
-    std::pair<int, int> mazeSize = maze.getSize();
-    int mazeRows = mazeSize.first;
-    int mazeCols = mazeSize.second;
+    std::pair<int, int> newPosition = getNextPosition(position, action);
 
     // Check for boundaries and walls
-    if (newRow < 0 || newRow >= mazeRows || newCol < 0 || newCol >= mazeCols || maze.at(newRow, newCol) == 1) {
-        newRow = position.first;
-        newCol = position.second;
+    if (isValidMove(maze, newPosition)) {
+        // Update position if valid move
+        position = newPosition;
     }
 
-    int reward = STEP_REWARD; // Default reward
-    if (maze.at(newRow, newCol) == 2) {  // Found goggles
-        reward = 5;  // Positive reward for finding goggles
-    } else if (maze.at(newRow, newCol) == 3) {  // Found speed potion
-        reward = 5;  // Positive reward for finding speed potion
-    } else if (newRow == GOAL_ROW && newCol == GOAL_COL) {
-        reward = GOAL_REWARD; // Reward for reaching the goal
-    }
-
-    updateQValues(action, reward, newRow, newCol);
-    position.first = newRow;
-    position.second = newCol;
+    int reward = calculateReward(maze, position.first, position.second);
+    updateQValues(action, reward, position.first, position.second);
 
     // Check for max steps
     if (++stepsTaken >= MAX_STEPS) {
-        position = startingPosition;
-        stepsTaken = 0;
+        reset(); // Reset agent position and step count
     }
 }
+
+std::pair<int, int> QLearningAgent::getNextPosition(std::pair<int, int> currentPosition, int action) {
+    int newRow = currentPosition.first;
+    int newCol = currentPosition.second;
+
+    // Assuming action encoding: 0 up, 1 right, 2 down, 3 left
+    switch (action) {
+        case 0: newRow--; break;
+        case 1: newCol++; break;
+        case 2: newRow++; break;
+        case 3: newCol--; break;
+    }
+    return std::make_pair(newRow, newCol);
+}
+
+bool QLearningAgent::isValidMove(const Maze &maze, std::pair<int, int> newPosition) {
+    // Get the size of the maze and check if the new position is within bounds and not a wall
+    std::pair<int, int> mazeSize = maze.getSize();
+    int mazeRows = mazeSize.first;
+    int mazeCols = mazeSize.second;
+    int newRow = newPosition.first;
+    int newCol = newPosition.second;
+
+    // Check if the new position is within the maze boundaries and not a wall
+    if (newRow < 0 || newRow >= mazeRows || newCol < 0 || newCol >= mazeCols) {
+        // Out of bounds
+        return false;
+    }
+
+    // Check if the new position is a wall
+    if (maze.at(newRow, newCol) == 1) {
+        // Position is a wall
+        return false;
+    }
+
+    // The move is valid
+    return true;
+}
+
+
+
 // Implementation of hasReachedGoal
 bool QLearningAgent::hasReachedGoal(const Maze &maze) {
     return position.first == GOAL_ROW && position.second == GOAL_COL;
