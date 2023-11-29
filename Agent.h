@@ -7,6 +7,13 @@
 
 using namespace std;
 
+
+
+
+
+
+
+
 class Agent {
 protected:
     pair<int, int> position;  // Agent's position in the maze
@@ -16,6 +23,22 @@ public:
     virtual void move(const Maze &maze) = 0;  // Pure virtual function for movement
     pair<int, int> getPosition() const { return position; }
     void setPosition(int row, int col) { position.first = row; position.second = col; }
+    
+    
+    
+};
+
+
+class MyAgent : public Agent {
+public:
+    MyAgent(int row, int col) : Agent(row, col) {}
+
+    void move(const Maze &maze) override {
+        // Movement logic here
+        // For example, you might decide to move right if possible
+        pair<int, int> currentPosition = getPosition();
+        setPosition(currentPosition.first, currentPosition.second + 1);
+    }
 };
 
 #endif // AGENT_H

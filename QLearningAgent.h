@@ -18,7 +18,7 @@ private:
     const int STEP_REWARD = -1;  // Penalty for each step
     const int WALL_REWARD = -5;  // Penalty for hitting a wall
     // QLearningAgent.h
-    
+    int lastAction = -1; 
     // ... other includes and declarations ...
 
     // Constants for rewards and penalties
@@ -27,12 +27,12 @@ private:
     const int SPEED_POTION_REWARD = 5;
     const int FOG_PENALTY = -5;
     const int SLOWPOKE_POTION_PENALTY = -5;
-
+    std::pair<int, int> calculateNewPosition(std::pair<int, int> currentPosition, int action);
     // ... QLearningAgent class declaration ...
 
     int direction;  // 0: up, 1: right, 2: down, 3: left
     int speed;
-    int lastAction;
+    
 public:
     QLearningAgent(int row, int col);
     int chooseAction(const Maze &maze);
@@ -41,7 +41,9 @@ public:
     void reset();  // Resets the agent to the starting position
     bool hasReachedGoal(const Maze &maze);  // Checks if the agent has reached the goal, now taking Maze as a parameter
     bool isValidMove(const Maze &maze, std::pair<int, int> newPosition);
-    std::pair<int, int> getNextPosition(std::pair<int, int> currentPosition, int action);
+    std::pair<int, int> getNextPosition(const Maze &maze, std::pair<int, int> currentPosition, int action, int lastAction);
+    
+    // ...
 
 };
 

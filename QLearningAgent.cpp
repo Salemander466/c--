@@ -3,10 +3,11 @@
 #include <cstdlib> // For std::rand, std::srand
 #include <ctime> // For std::time
 #include <algorithm> // For std::max_element
+#include "Agent.h"
 
 // Assuming these are constant for the maze
-const int GOAL_ROW = 20; // 21st row in 0-based indexing
-const int GOAL_COL = 20; // 21st column in 0-based indexing
+const int GOAL_ROW = 12; // 21st row in 0-based indexing
+const int GOAL_COL = 6; // 21st column in 0-based indexing
 
 
 QLearningAgent::QLearningAgent(int row, int col) : Agent(row, col) {
@@ -24,22 +25,26 @@ QLearningAgent::QLearningAgent(int row, int col) : Agent(row, col) {
 }
 
 int QLearningAgent::chooseAction(const Maze &maze) {
-    // Epsilon-greedy strategy
-    if ((rand() % 100) / 100.0 < EPSILON) {
-        return rand() % 4; // Random action (0 up, 1 right, 2 down, 3 left)
-    } else {
-        // Choose the best action based on Q-values
-        int bestAction = 0;
-        double bestValue = Q[position.first][position.second][0];
-        for (int a = 1; a < 4; a++) {
-            if (Q[position.first][position.second][a] > bestValue) {
-                bestValue = Q[position.first][position.second][a];
-                bestAction = a;
-            }
-        }
-        return bestAction;
+    std::vector<int> possibleActions = {0, 1, 2, 3};  // Up, Right, Down, Left
+
+    // Remove the opposite of the last action
+    if (lastAction != -1) {
+        possibleActions.erase(std::remove(possibleActions.begin(), possibleActions.end(), (lastAction + 2) % 4), possibleActions.end());
     }
+
+    // Epsilon-greedy strategy
+    if ((std::rand() % 100) / 100.0 < EPSILON) {
+        // Choose a random action from the remaining possible actions
+        lastAction = possibleActions[std::rand() % possibleActions.size()];
+    } else {
+        // Choose the best action based on Q-values from the remaining possible actions
+        // ...
+        // Update lastAction with the chosen action
+    }
+
+    return lastAction;
 }
+
 
 
 void QLearningAgent::updateQValues(int action, int reward, int newRow, int newCol) {
@@ -75,14 +80,18 @@ int QLearningAgent::calculateReward(const Maze &maze, int row, int col) {
 
 void QLearningAgent::move(const Maze &maze) {
     int action = chooseAction(maze); // Choose action based on Q-values and epsilon-greedy strategy
-    
+    std::pair<int, int> newPosition = getNextPosition(maze, position, action, lastAction);  // Pass maze and lastAction
+    // ... rest of the method ...
     // Calculate new position based on action
-    std::pair<int, int> newPosition = getNextPosition(position, action);
-
+    
+    int calcRow = position.first;
+    int calcCol = position.second;
+    // std::cout << "Attempting calc to: (" << calcRow << ", " << calcCol << ")" << std::endl;
     // Check for boundaries and walls
     if (isValidMove(maze, newPosition)) {
         // Update position if valid move
         position = newPosition;
+        setPosition(newPosition.first, newPosition.second);
     }
 
     int reward = calculateReward(maze, position.first, position.second);
@@ -94,42 +103,97 @@ void QLearningAgent::move(const Maze &maze) {
     }
 }
 
-std::pair<int, int> QLearningAgent::getNextPosition(std::pair<int, int> currentPosition, int action) {
+std::pair<int, int> QLearningAgent::getNextPosition(const Maze &maze, std::pair<int, int> currentPosition, int action, int lastAction) {
+    int newRow = currentPosition.first;
+    int newCol = currentPosition.second;
+    std::pair<int, int> alternativePosition;
+
+    // If the chosen action is a reversal of the last action, try other directions
+    if ((action == 0 && lastAction == 2) || // Up after Down
+        (action == 1 && lastAction == 3) || // Right after Left
+        (action == 2 && lastAction == 0) || // Down after Up
+        (action == 3 && lastAction == 1)) { // Left after Right
+
+        std::vector<int> alternativeActions = {0, 1, 2, 3}; // All possible actions
+        alternativeActions.erase(std::remove(alternativeActions.begin(), alternativeActions.end(), action), alternativeActions.end()); // Remove chosen action
+        alternativeActions.erase(std::remove(alternativeActions.begin(), alternativeActions.end(), (lastAction + 2) % 4), alternativeActions.end()); // Remove direct reversal
+
+        // Try alternative actions
+        for (int altAction : alternativeActions) {
+            alternativePosition = calculateNewPosition(currentPosition, altAction);
+            // Check if the alternative position is valid
+            if (isValidMove(maze, alternativePosition)) {
+                return alternativePosition;
+            }
+        }
+
+        // If no valid alternative move, return the last action's position
+        return calculateNewPosition(currentPosition, lastAction);
+    }
+
+    // Normal action calculation
+    return calculateNewPosition(currentPosition, action);
+}
+
+// Helper function to calculate new position based on an action
+std::pair<int, int> QLearningAgent::calculateNewPosition(std::pair<int, int> currentPosition, int action) {
     int newRow = currentPosition.first;
     int newCol = currentPosition.second;
 
-    // Assuming action encoding: 0 up, 1 right, 2 down, 3 left
     switch (action) {
-        case 0: newRow--; break;
-        case 1: newCol++; break;
-        case 2: newRow++; break;
-        case 3: newCol--; break;
+        case 1: newRow--; break; // Up
+        case 0: newCol++; break; // Right
+        case 3: newRow++; break; // Down
+        case 2: newCol--; break; // Left
     }
     return std::make_pair(newRow, newCol);
 }
 
+
+
 bool QLearningAgent::isValidMove(const Maze &maze, std::pair<int, int> newPosition) {
     // Get the size of the maze and check if the new position is within bounds and not a wall
     std::pair<int, int> mazeSize = maze.getSize();
-    int mazeRows = mazeSize.first;
-    int mazeCols = mazeSize.second;
+    int mazeRows = 21;
+    int mazeCols = 21;
     int newRow = newPosition.first;
     int newCol = newPosition.second;
 
-    // Check if the new position is within the maze boundaries and not a wall
+    // Debugging: Print current and new position
+    std::cout << "Current Position: (" << position.first << ", " << position.second << ")" << std::endl;
+    std::cout << "Attempting Move to: (" << newRow << ", " << newCol << ")" << std::endl;
+
+    // Check if the new position is within the maze boundaries
     if (newRow < 0 || newRow >= mazeRows || newCol < 0 || newCol >= mazeCols) {
-        // Out of bounds
+        // Debugging: Print out of bounds message
+        std::cout << "Move Invalid: New position out of bounds.("<< newRow<< ","<< mazeRows << "," << newCol<< "," << mazeCols<< ")" << std::endl;
         return false;
     }
 
-    // Check if the new position is a wall
-    if (maze.at(newRow, newCol) == 1) {
-        // Position is a wall
+    // Check if the new position is not a wall
+    int cellValue = maze.at(newRow, newCol);
+    if (cellValue == 1) {  // Assuming 1 represents wall cells
+        // Debugging: Print wall collision message along with the cell value
+        // std::cout << "Move Invalid: New position (" << newRow << ", " << newCol 
+        //         << ") is a wall. Cell Value: " << cellValue << std::endl;
         return false;
-    }
+}
 
-    // The move is valid
+
+    // Debugging: Print valid move message
+    // std::cout << "Move Valid: New position is free." << std::endl;
     return true;
+}
+
+std::pair<int, int> findStartingPosition(const std::vector<std::vector<int>>& mazeGrid) {
+    for (int row = 0; row < mazeGrid.size(); ++row) {
+        for (int col = 0; col < mazeGrid[row].size(); ++col) {
+            if (mazeGrid[row][col] == 2) {  // 2 represents the starting position
+                return std::make_pair(row, col);
+            }
+        }
+    }
+    return std::make_pair(0, 0); // Default starting position if '2' is not found
 }
 
 
