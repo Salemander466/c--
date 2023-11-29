@@ -29,7 +29,11 @@ private:
     const int SLOWPOKE_POTION_PENALTY = -5;
     std::pair<int, int> calculateNewPosition(std::pair<int, int> currentPosition, int action);
     // ... QLearningAgent class declaration ...
+    std::vector<std::pair<std::pair<int, int>, int>> validMoves;
+    
+    std::vector<std::pair<std::pair<int, int>, int>> getNextPosition(const Maze &maze, std::pair<int, int> currentPosition);
 
+    
     int direction;  // 0: up, 1: right, 2: down, 3: left
     int speed;
     
@@ -42,7 +46,7 @@ public:
     bool hasReachedGoal(const Maze &maze);  // Checks if the agent has reached the goal, now taking Maze as a parameter
     bool isValidMove(const Maze &maze, std::pair<int, int> newPosition);
     std::pair<int, int> getNextPosition(const Maze &maze, std::pair<int, int> currentPosition, int action, int lastAction);
-    
+    int mapPositionToAction(std::pair<int, int> currentPosition, std::pair<int, int> newPosition);
     // ...
 
 };

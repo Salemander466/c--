@@ -23,7 +23,8 @@ public:
     virtual void move(const Maze &maze) = 0;  // Pure virtual function for movement
     pair<int, int> getPosition() const { return position; }
     void setPosition(int row, int col) { position.first = row; position.second = col; }
-    
+    std::vector<std::pair<std::pair<int, int>, int>> getNextPosition(const Maze &maze, std::pair<int, int> currentPosition);
+
     
     
 };
